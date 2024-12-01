@@ -1,0 +1,46 @@
+name: Build
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          toolchain: 1.81
+          target: i686-pc-windows-msvc
+          default: true
+
+      - name: Install msbuild
+        uses: microsoft/setup-msbuild@v1.0.2
+        with:
+          vs-version: 16
+
+      - name: Build Windows modules
+        shell: bash
+        run: ./build-windows-modules.sh
+
+      - name: Build and test crates
+        shell: bash
+        run: ./ci/check-rust.sh
+        env:
+          CARGO_TARGET_DIR: C:/cargo-target
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            C:/cargo-target/*/*.dll
+            C:/cargo-target/*/*.exe
+
+on:
+  workflow_dispatch:
